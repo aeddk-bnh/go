@@ -31,3 +31,11 @@ add_test(NAME SGFExtraTest COMMAND test_sgf_extra)
 add_executable(test_sgf_meta test_sgf_meta.cpp)
 target_link_libraries(test_sgf_meta gtest_main gogame)
 add_test(NAME SGFMetaTest COMMAND test_sgf_meta)
+
+add_executable(test_sgf_escape test_sgf_escape.cpp)
+target_link_libraries(test_sgf_escape gtest_main gogame)
+add_test(NAME SGFEscapeTest COMMAND test_sgf_escape)
+
+add_executable(test_mcts test_mcts.cpp)
+target_link_libraries(test_mcts gtest_main gogame)
+add_test(NAME MCTSTest COMMAND test_mcts)
