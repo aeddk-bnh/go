@@ -1,0 +1,26 @@
+# Build
+/build/
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# executables
+*.exe
+*.dll
+
+# MSYS2
+/mingw*/*
+/usr/*
+
+# Logs
+*.log
+
+# VS
+*.vcxproj*
