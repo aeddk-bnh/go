@@ -36,14 +36,18 @@ add_executable(test_sgf_escape test_sgf_escape.cpp)
 target_link_libraries(test_sgf_escape gtest_main gogame)
 add_test(NAME SGFEscapeTest COMMAND test_sgf_escape)
 
+add_executable(test_game test_game.cpp)
+target_link_libraries(test_game gtest_main gogame)
+add_test(NAME GameTest COMMAND test_game)
+
 add_executable(test_mcts test_mcts.cpp)
-target_link_libraries(test_mcts gtest_main gogame)
+target_link_libraries(test_mcts gtest_main gogame ai)
 add_test(NAME MCTSTest COMMAND test_mcts)
 
 add_executable(test_mcts_threaded test_mcts_threaded.cpp)
-target_link_libraries(test_mcts_threaded gtest_main gogame)
+target_link_libraries(test_mcts_threaded gtest_main gogame ai)
 add_test(NAME MCTSThreadedTest COMMAND test_mcts_threaded)
 
 add_executable(test_mcts_stress test_mcts_stress.cpp)
-target_link_libraries(test_mcts_stress gtest_main gogame)
+target_link_libraries(test_mcts_stress gtest_main gogame ai)
 add_test(NAME MCTSStressTest COMMAND test_mcts_stress)
