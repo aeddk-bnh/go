@@ -28,6 +28,9 @@ CI should run on push and PRs:
 - Tag release, run full test matrix, create release notes.
 
 ## Running checks locally
+- Use the timeout helpers to avoid hanging terminal commands:
+  - On Unix-like systems: `./scripts/run_with_timeout.sh <seconds> <command...>`
+  - On Windows PowerShell: `.\scripts\run_with_timeout.ps1 -TimeoutSeconds <seconds> -Command '<cmd>'`
 - Format check: `clang-format -style=file -i <files>` or to check without changing: `clang-format -style=file --dry-run --Werror <files>` (or use `git-clang-format`).
 - Static analysis: `clang-tidy` run via CMake build or directly: `clang-tidy <file> -- -Iinclude`.
 - cpplint: use `CPPLINT.cfg` and run `cpplint --recursive src include`.

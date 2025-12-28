@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         build_type: [Debug, Release]
@@ -17,28 +18,31 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake ninja-build clang-format-12 clang-tidy
-      - name: Configure
+          sudo apt-get install -y build-essential cmake ninja-build clang-format-12 clang-tidy coreutils
+      - name: Configure (with timeout)
         run: |
           mkdir -p build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
-      - name: Build
+          # 10m timeout
+          ./scripts/run_with_timeout.sh 600 cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ..
+      - name: Build (with timeout)
         run: |
           cd build
-          cmake --build . -- -j$(nproc)
-      - name: Run tests
+          # 20m timeout
+          ./scripts/run_with_timeout.sh 1200 cmake --build . -- -j$(nproc)
+      - name: Run tests (with timeout)
         run: |
           cd build
-          ctest --output-on-failure
-      - name: Format check
+          # 10m timeout
+          ./scripts/run_with_timeout.sh 600 ctest --output-on-failure
+      - name: Format check (with timeout)
         run: |
           # Check formatting (fail if any changes)
           git --no-pager diff --exit-code || true
           files=$(git ls-files '*.cpp' '*.hpp' '*.h' '*.c' | tr '\n' ' ')
           if [ -n "$files" ]; then
             for f in $files; do
-              clang-format-12 -style=file "$f" | git apply --check - || { echo "clang-format errors in $f"; exit 1; }
+              ./scripts/run_with_timeout.sh 60 clang-format-12 -style=file "$f" | git apply --check - || { echo "clang-format errors in $f"; exit 1; }
             done
           fi
 
