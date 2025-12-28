@@ -121,5 +121,13 @@ bool Board::place(int x,int y, Stone s){
   grid.swap(tmp);
   currentHash = newHash;
   hashHistory.push_back(currentHash);
+  recordMove(x,y,s,false);
+  return true;
+}
+
+bool Board::pass(Stone s){
+  // pass does not change grid but counts as a move
+  hashHistory.push_back(currentHash);
+  recordPass(s);
   return true;
 }

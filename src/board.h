@@ -17,6 +17,11 @@ public:
   int size() const { return N; }
   uint64_t zobrist() const { return currentHash; }
   const std::vector<uint64_t>& history() const { return hashHistory; }
+
+  struct Move { int x; int y; Stone s; bool pass; };
+  const std::vector<Move>& moves() const { return moveHistory; }
+  bool pass(Stone s);
+
 private:
   int N;
   std::vector<Stone> grid;
@@ -26,4 +31,8 @@ private:
   uint64_t currentHash{0};
   std::vector<uint64_t> hashHistory;
   Zobrist zobristTable{9};
+  // Move history for SGF roundtrips
+  std::vector<Move> moveHistory;
+  void recordMove(int x,int y, Stone s, bool pass=false){ moveHistory.push_back({x,y,s,pass}); }
+  void recordPass(Stone s){ moveHistory.push_back({-1,-1,s,true}); hashHistory.push_back(currentHash); }
 };
