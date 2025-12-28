@@ -9,7 +9,27 @@ static char coordToLetter(int v){ return char('a' + v); }
 
 static std::string escapeText(const std::string &in){
   std::string out;
-  for(char c:in){ if(c==']' || c=='\\') { out.push_back('\\'); out.push_back(c); } else out.push_back(c); }
+  for(char c:in){
+    if(c=='\\' || c==']' || c==';') { out.push_back('\\'); out.push_back(c); }
+    else if(c=='\n') { out.push_back('\\'); out.push_back('n'); }
+    else if(c=='\r') { out.push_back('\\'); out.push_back('r'); }
+    else out.push_back(c);
+  }
+  return out;
+}
+
+static std::string unescapeText(const std::string &in){
+  std::string out;
+  for(size_t i=0;i<in.size();++i){
+    char c = in[i];
+    if(c=='\\' && i+1<in.size()){
+      char n = in[i+1];
+      i++;
+      if(n=='n') out.push_back('\n');
+      else if(n=='r') out.push_back('\r');
+      else out.push_back(n);
+    } else out.push_back(c);
+  }
   return out;
 }
 
@@ -55,7 +75,8 @@ bool parse(const std::string& sgf, Board& out, double& komi_out, Game* game){
         i = j;
         if(i<sgf.size() && sgf[i]=='['){
           i++; size_t k=i; while(k<sgf.size() && sgf[k]!=']') k++;
-          std::string val = sgf.substr(i, k-i);
+          std::string raw = sgf.substr(i, k-i);
+          std::string val = unescapeText(raw);
           i = (k<sgf.size()?k+1:k);
           if(prop=="B" || prop=="W"){
             moveColor = prop[0]; moveVal = val;

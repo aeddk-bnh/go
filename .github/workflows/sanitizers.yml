@@ -1,0 +1,34 @@
+name: Sanitizers
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  linux-sanitizers:
+    name: Linux Sanitizers
+    runs-on: ubuntu-latest
+    permissions: read-all
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build pkg-config
+      - name: Configure (Sanitizers)
+        run: |
+          mkdir -p build
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_CXX_FLAGS="-fsanitize=thread,address,undefined -fno-omit-frame-pointer -O1" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread,address,undefined"
+      - name: Build
+        run: cmake --build build -j 2
+      - name: Run stress test (sanitizers)
+        run: |
+          # run single threaded ctest runner to allow TSAN to detect races
+          timeout 10m ctest --test-dir build/tests -R MCTSStressTest --output-on-failure -j 1
+        env:
+          ASAN_OPTIONS: "detect_leaks=1"
+          UBSAN_OPTIONS: "print_stacktrace=1"

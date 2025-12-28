@@ -1,0 +1,21 @@
+# ninja log v7
+1	83	7886147506738997	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-mkdir	93b57f04f017d89d
+1	83	7886147506738997	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-mkdir	93b57f04f017d89d
+84	6711	7886147573021367	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download	8e70668825471f15
+84	6711	7886147573021367	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download	8e70668825471f15
+6722	6812	7886147574027459	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-update	28b79bace3f51455
+6722	6812	7886147574027459	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-update	28b79bace3f51455
+6812	6882	7886147574731782	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-patch	c8b6946cb6196fdf
+6812	6882	7886147574731782	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-patch	c8b6946cb6196fdf
+6883	6951	7886147575436024	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-configure	3bb9d541da41032e
+6883	6951	7886147575436024	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-configure	3bb9d541da41032e
+6952	7019	7886147576111586	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-build	4fb9923a2fdfe9dc
+6952	7019	7886147576111586	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-build	4fb9923a2fdfe9dc
+7020	7131	7886147577221469	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-install	f46c7564e8bc7aca
+7020	7131	7886147577221469	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-install	f46c7564e8bc7aca
+7131	7199	7886147577906047	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-test	e57a56d609a70a42
+7131	7199	7886147577906047	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-test	e57a56d609a70a42
+7199	7293	7886147578852733	CMakeFiles/googletest-populate-complete	4b114d1e576f1b0c
+7199	7293	7886147578852733	googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-done	4b114d1e576f1b0c
+7199	7293	7886147578852733	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/CMakeFiles/googletest-populate-complete	4b114d1e576f1b0c
+7199	7293	7886147578852733	C:/Users/ASUS/Documents/go/build-bench-release/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-done	4b114d1e576f1b0c
