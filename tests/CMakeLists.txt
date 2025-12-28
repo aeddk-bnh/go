@@ -11,3 +11,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(test_board test_board.cpp)
 target_link_libraries(test_board gtest_main gogame)
 add_test(NAME BoardTest COMMAND test_board)
+
+add_executable(test_superko test_superko.cpp)
+target_link_libraries(test_superko gtest_main gogame)
+add_test(NAME SuperkoTest COMMAND test_superko)
