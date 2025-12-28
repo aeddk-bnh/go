@@ -1,5 +1,7 @@
 add_library(gogame
   board.cpp
+  zobrist.cpp
+  rules.cpp
 )
 
 target_include_directories(gogame PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
