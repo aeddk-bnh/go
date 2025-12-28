@@ -1,4 +1,5 @@
 #include "mcts.h"
+#include "pvn.h"
 #include "rules.h"
 #include "thread_pool.h"
 #include <cmath>
@@ -25,7 +26,9 @@ static double move_prior_score(const Board& b, const Board::Move& mv){
   return center_score + 2.0*adj_score;
 }
 
-MCTS::MCTS(const MCTSConfig& cfg): cfg(cfg), rng(0xC0FFEE) {}
+MCTS::MCTS(const MCTSConfig& cfg): cfg(cfg), rng(0xC0FFEE) {
+  pv = makeSimpleHeuristicPV();
+}
 
 std::vector<Board::Move> MCTS::legalMoves(const Board& b, Stone toPlay){
   std::vector<Board::Move> moves;
@@ -38,15 +41,16 @@ std::vector<Board::Move> MCTS::legalMoves(const Board& b, Stone toPlay){
   return moves;
 }
 
-double MCTS::rollout(Board state, Stone player){
+double MCTS::rollout(Board state, Stone player, std::mt19937_64 &rng){
   // play random moves until both pass consecutively or depth
   Stone cur = player;
   int passes = 0;
   for(int d=0; d<cfg.playout_depth; ++d){
     auto moves = legalMoves(state, cur);
-    // Weighted random rollout preferring priors
+    // Weighted random rollout preferring priors (use PV if available)
     std::vector<double> w(moves.size()); double total=0.0;
-    for(size_t i=0;i<moves.size();++i){ w[i] = move_prior_score(state, moves[i]) + 1.0; total += w[i]; }
+    if(pv){ auto probs = pv->policy(state, moves); for(size_t i=0;i<moves.size();++i){ w[i] = probs[i] + 1e-6; total += w[i]; } }
+    else { for(size_t i=0;i<moves.size();++i){ w[i] = move_prior_score(state, moves[i]) + 1.0; total += w[i]; } }
     std::uniform_real_distribution<double> ud(0.0, total);
     double r = ud(rng);
     size_t idx=0; double acc=0.0; for(; idx<moves.size(); ++idx){ acc+=w[idx]; if(r<=acc) break; }
@@ -223,8 +227,10 @@ Board::Move MCTS::runParallel(const Board& root, Stone toPlay, int iterations, i
         }
       }
 
-      // Simulation
-      double z = rollout(leaf->state, leaf->playerToMove);
+      // Simulation: prefer PV value if available, otherwise rollout using local RNG
+      double z;
+      if(this->pv){ z = this->pv->value(leaf->state); }
+      else { z = rollout(leaf->state, leaf->playerToMove, local_rng); }
 
       // Backpropagate and remove virtual losses
       for (auto itn = path.rbegin(); itn != path.rend(); ++itn) {

@@ -58,11 +58,7 @@ std::pair<double,double> Scorer::score(const Board& b, Ruleset r, double komi){
   }
 
   double black_score=0, white_score=0;
-  // debug output
-  if(territory_black > 1 || territory_white > 1){
-    std::cerr << "DEBUG Scorer: stones_black="<<stones_black<<" stones_white="<<stones_white
-              <<" territory_black="<<territory_black<<" territory_white="<<territory_white<<"\n";
-  }
+  // (debug output removed for cleaner benchmark/test runs)
   if(r==Ruleset::Chinese){
     black_score = stones_black + territory_black;
     white_score = stones_white + territory_white + komi;

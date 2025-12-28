@@ -8,6 +8,7 @@
 #include <atomic>
 #include "board.h"
 #include "tt_sharded.h"
+#include "pvn.h"
 
 struct MCTSConfig {
   int iterations = 1000;
@@ -55,7 +56,7 @@ public:
   Board::Move runParallel(const Board& root, Stone toPlay, int iterations, int nThreads);
 
   std::vector<Board::Move> legalMoves(const Board& b, Stone toPlay);
-  double rollout(Board state, Stone player);
+  double rollout(Board state, Stone player, std::mt19937_64 &rng);
   Node* select(Node* node);
   Node* expand(Node* node);
   void backpropagate(Node* node, double result);
@@ -72,4 +73,7 @@ public:
   int rootChildrenCount() const { return rootNode ? (int)rootNode->children.size() : 0; }
   int childVirtualLoss(size_t idx) const { return rootNode && idx<rootNode->children.size() ? rootNode->children[idx]->virtual_loss.load() : -1; }
   int childVisits(size_t idx) const { return rootNode && idx<rootNode->children.size() ? rootNode->children[idx]->visits.load() : -1; }
+  // Policy/Value network (optional). Defaults to a simple heuristic PV.
+  std::shared_ptr<PolicyValueNet> pv;
+  void setPV(std::shared_ptr<PolicyValueNet> p) { pv = std::move(p); }
 };
