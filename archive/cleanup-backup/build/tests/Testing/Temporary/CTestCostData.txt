@@ -1,0 +1,12 @@
+BoardTest 6 0.259589
+SuperkoTest 6 0.246133
+ScoringTest 6 0.252533
+SGFTest 6 0.223343
+SGFExtraTest 6 0.227296
+SGFMetaTest 6 0.182596
+SGFEscapeTest 6 0.243829
+GameTest 6 0.246442
+MCTSTest 6 0.288318
+MCTSThreadedTest 6 0.263416
+MCTSStressTest 6 0.138381
+---

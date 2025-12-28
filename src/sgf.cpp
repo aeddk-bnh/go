@@ -38,7 +38,7 @@ namespace SGF {
 bool parse(const std::string& sgf, Board& out, double& komi_out, Game* game){
   komi_out = 0.0;
   if(game){ game->moves.clear(); game->PB.clear(); game->PW.clear(); game->RE.clear(); game->KM = 0.0; }
-  int sz = out.size();
+  (void)out; // size not tracked here
   // find SZ
   auto szpos = sgf.find("SZ[");
   if(szpos!=std::string::npos){
@@ -65,7 +65,7 @@ bool parse(const std::string& sgf, Board& out, double& komi_out, Game* game){
     if(sgf[i]==';'){
       i++;
       // parse all properties in this node
-      std::string nodePB, nodePW, nodeRE, nodeC;
+      [[maybe_unused]] std::string nodePB, nodePW, nodeRE, nodeC;
       char moveColor=0; std::string moveVal;
       while(i<sgf.size() && sgf[i]!=';' && sgf[i]!=')' && sgf[i] != '('){
         if(std::isspace((unsigned char)sgf[i])){ i++; continue; }
@@ -115,7 +115,7 @@ std::string write(const Board& b, double komi){
 std::string write(const Game& g){
   std::ostringstream ss;
   ss << "(\n";
-  ss << ";GM[1]FF[4]SZ["<< (g.moves.empty()?19:19) <<"]KM["<<g.KM<<"]"; // SZ is not tracked here
+  ss << ";GM[1]FF[4]SZ[19]KM["<<g.KM<<"]"; // SZ is not tracked here
   if(!g.PB.empty()) ss << "PB["<<escapeText(g.PB)<<"]";
   if(!g.PW.empty()) ss << "PW["<<escapeText(g.PW)<<"]";
   if(!g.RE.empty()) ss << "RE["<<escapeText(g.RE)<<"]";

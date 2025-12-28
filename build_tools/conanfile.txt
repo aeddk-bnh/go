@@ -1,0 +1,3 @@
+[tool_requires]
+cppcheck/2.18.3
+ninja/1.11.1

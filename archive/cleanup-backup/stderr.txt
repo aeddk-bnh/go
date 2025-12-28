@@ -1,0 +1,23 @@
+src\board.cpp:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+src\board.cpp:51:32: style: The function 'place' is never used. [unusedFunction]
+  [[maybe_unused]] bool Board::place(int x,int y, Stone s){
+                               ^
+src\board.cpp:129:32: style: The function 'isLegal' is never used. [unusedFunction]
+  [[maybe_unused]] bool Board::isLegal(int x,int y, Stone s) const {
+                               ^
+src\board.cpp:200:32: style: The function 'pass' is never used. [unusedFunction]
+  [[maybe_unused]] bool Board::pass(Stone s){
+                               ^
+src\board.cpp:212:32: style: The function 'setLastMoveComment' is never used. [unusedFunction]
+  [[maybe_unused]] void Board::setLastMoveComment(const std::string &c){
+                               ^
+src\board.h:20:49: style: The function 'history' is never used. [unusedFunction]
+  [[maybe_unused]] const std::vector<uint64_t>& history() const { return hashHistory; }
+                                                ^
+src\board.h:23:45: style: The function 'moves' is never used. [unusedFunction]
+  [[maybe_unused]] const std::vector<Move>& moves() const { return moveHistory; }
+                                            ^
+nofile:0:0: information: Active checkers: 183/975 (use --checkers-report=<filename> to see details) [checkersReport]
+
