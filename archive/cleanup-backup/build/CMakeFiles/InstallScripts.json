@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/ASUS/Documents/go/build/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/go/build/src/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/go/build/src/ai/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/go/build/src/bench/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/go/build/tests/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

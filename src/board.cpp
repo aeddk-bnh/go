@@ -1,6 +1,7 @@
 #include "board.h"
 #include <stack>
 #include <cstdint>
+#include <algorithm>
 
 Board::Board(int n): N(n), grid(n*n, EMPTY), zobristTable(n) {
   currentHash = zobristTable.hash(grid);
@@ -47,7 +48,7 @@ void Board::removeGroup(int x,int y, Stone color){
   }
 }
 
-bool Board::place(int x,int y, Stone s){
+  [[maybe_unused]] bool Board::place(int x,int y, Stone s){
   if(!inside(x,y)) return false;
   int id = idx(x,y);
   if(grid[id] != EMPTY) return false;
@@ -115,7 +116,7 @@ bool Board::place(int x,int y, Stone s){
 
   // Check superko (hash exists previously)
   uint64_t newHash = zobristTable.hash(tmp);
-  for(uint64_t h : hashHistory) if(h==newHash) return false;
+  if (std::any_of(hashHistory.begin(), hashHistory.end(), [newHash](uint64_t h){ return h==newHash; })) return false;
 
   // Accept move: apply tmp to real grid
   grid.swap(tmp);
@@ -125,7 +126,7 @@ bool Board::place(int x,int y, Stone s){
   return true;
 }
 
-bool Board::isLegal(int x,int y, Stone s) const {
+  [[maybe_unused]] bool Board::isLegal(int x,int y, Stone s) const {
   if(!inside(x,y)) return false;
   int id = idx(x,y);
   if(grid[id] != EMPTY) return false;
@@ -192,11 +193,11 @@ bool Board::isLegal(int x,int y, Stone s) const {
 
   // Check superko (hash exists previously)
   uint64_t newHash = zobristTable.hash(tmp);
-  for(uint64_t h : hashHistory) if(h==newHash) return false;
+  if (std::any_of(hashHistory.begin(), hashHistory.end(), [newHash](uint64_t h){ return h==newHash; })) return false;
   return true;
 }
 
-bool Board::pass(Stone s){
+  [[maybe_unused]] bool Board::pass(Stone s){
   // pass does not change grid but counts as a move
   // recordPass already appends currentHash into history
   recordPass(s);
@@ -208,6 +209,6 @@ void Board::appendMove(int x,int y, Stone s, bool pass, const std::string &comme
   moveHistory.push_back({x,y,s,pass,comment});
 }
 
-void Board::setLastMoveComment(const std::string &c){
+  [[maybe_unused]] void Board::setLastMoveComment(const std::string &c){
   if(!moveHistory.empty()) moveHistory.back().comment = c;
 }

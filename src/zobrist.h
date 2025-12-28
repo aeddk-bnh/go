@@ -8,7 +8,7 @@
 
 class Zobrist {
 public:
-  Zobrist(int N);
+  explicit Zobrist(int N);
   uint64_t hash(const std::vector<Stone>& grid) const;
 private:
   int N;

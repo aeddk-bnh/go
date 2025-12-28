@@ -15,6 +15,10 @@ Thumbs.db
 *.exe
 *.dll
 
+# tools vendors we prefer to provision via Conan
+/tools/mingw-w64/
+/tools/ninja/
+
 # MSYS2
 /mingw*/*
 /usr/*
@@ -24,3 +28,20 @@ Thumbs.db
 
 # VS
 *.vcxproj*
+
+# Cleanup artifacts and temporary reports
+/cppcheck_err*.txt
+/cppcheck_err2.txt
+/cppcheck_err3.txt
+/cppcheck_err4.txt
+/cppcheck_err5.txt
+/cppcheck_out*.txt
+/cppcheck_report.txt
+/tmp_error.cpp
+/stdout.txt
+/stderr.txt
+/InstallationLog.txt
+
+# Generated build folders
+/build-bench/
+/build-bench-release/

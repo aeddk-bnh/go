@@ -14,7 +14,7 @@ static double move_prior_score(const Board& b, const Board::Move& mv){
   double cx = (N-1)/2.0, cy = (N-1)/2.0;
   double dx = mv.x - cx, dy = mv.y - cy;
   double dist = std::sqrt(dx*dx + dy*dy);
-  double center_score = (double)(N) - dist; // closer to center -> higher
+  double center_score = static_cast<double>(N) - dist; // closer to center -> higher
   // adjacency bonus
   int adj = 0;
   for(int dy2=-1; dy2<=1; ++dy2) for(int dx2=-1; dx2<=1; ++dx2){
@@ -26,9 +26,7 @@ static double move_prior_score(const Board& b, const Board::Move& mv){
   return center_score + 2.0*adj_score;
 }
 
-MCTS::MCTS(const MCTSConfig& cfg): cfg(cfg), rng(0xC0FFEE) {
-  pv = makeSimpleHeuristicPV();
-}
+MCTS::MCTS(const MCTSConfig& cfg): cfg(cfg), rng(0xC0FFEE), pv(makeSimpleHeuristicPV()) {}
 
 std::vector<Board::Move> MCTS::legalMoves(const Board& b, Stone toPlay){
   std::vector<Board::Move> moves;
@@ -73,18 +71,18 @@ MCTS::Node* MCTS::select(Node* node){
     // If there are no children to descend into, return this node
     if(node->children.empty()) return node;
     // UCT selection (account for virtual loss)
-    double best = -1e100; int bi = -1;
+    double best = -1e100; size_t bi = 0;
     for(size_t i=0;i<node->children.size();++i){
       Node* c = node->children[i].get();
       int cvis = c->visits.load();
       int cvl = c->virtual_loss.load();
-      double Q = (cvis==0)?0.0:(c->value / (double)cvis);
-        double denom = (double)(cvis + cvl + 1);
-        double U = cfg.exploration * std::sqrt(std::log((double)node->visits.load()+1.0) / denom);
+      double Q = (cvis==0)?0.0:(c->value / static_cast<double>(cvis));
+        double denom = static_cast<double>(cvis + cvl + 1);
+        double U = cfg.exploration * std::sqrt(std::log1p(static_cast<double>(node->visits.load())) / denom);
         double p = move_prior_score(node->state, c->moveFromParent);
-        double prior_term = cfg.prior_weight * p / (1.0 + (double)cvis);
+        double prior_term = cfg.prior_weight * p / (1.0 + static_cast<double>(cvis));
         double score = Q + U + prior_term;
-      if(score > best){ best = score; bi = (int)i; }
+      if(score > best){ best = score; bi = i; }
     }
     node = node->children[bi].get();
   }
@@ -92,7 +90,7 @@ MCTS::Node* MCTS::select(Node* node){
 
 MCTS::Node* MCTS::expand(Node* node){
   // Progressive widening: limit number of children allowed based on node visits
-  double visits = (double)node->visits.load();
+  double visits = static_cast<double>(node->visits.load());
   size_t max_children = std::max<size_t>(1, (size_t)(cfg.pw_k * std::pow(visits+1.0, cfg.pw_alpha)));
   if(node->untriedMoves.empty() || node->children.size() >= max_children) return node;
   // choose untried move weighted by prior
@@ -115,7 +113,7 @@ MCTS::Node* MCTS::expand(Node* node){
   Node* ptr = child.get();
   node->children.push_back(std::move(child));
   // register in transposition table
-  tt.insert(ptr->state.zobrist(), (void*)ptr);
+  tt.insert(ptr->state.zobrist(), static_cast<void*>(ptr));
   return ptr;
 }
 
@@ -144,7 +142,7 @@ Board::Move MCTS::runParallel(const Board& root, Stone toPlay, int iterations, i
   rootNode->untriedMoves = legalMoves(root, toPlay);
   // clear transposition table and register root
   tt.clear();
-  tt.insert(rootNode->state.zobrist(), (void*)rootNode.get());
+  tt.insert(rootNode->state.zobrist(), static_cast<void*>(rootNode.get()));
 
   std::atomic<int> remaining(iterations);
   ThreadPool pool((size_t)std::max(1, nThreads));
@@ -168,23 +166,23 @@ Board::Move MCTS::runParallel(const Board& root, Stone toPlay, int iterations, i
         // lock node to read children/untriedMoves consistently
         std::unique_lock<std::mutex> lk(node->node_mutex);
         // progressive widening: allow expansion only if children < threshold
-        double visits_local = (double)node->visits.load();
+        double visits_local = static_cast<double>(node->visits.load());
         size_t max_children_local = std::max<size_t>(1, (size_t)(cfg.pw_k * std::pow(visits_local+1.0, cfg.pw_alpha)));
         if (!node->untriedMoves.empty() && node->children.size() < max_children_local) { lk.unlock(); break; }
         // If there are no children to descend into, expand here
         if (node->children.empty()) { lk.unlock(); break; }
-        double best = -1e100; int bi = -1;
+        double best = -1e100; size_t bi = 0;
         for (size_t i = 0; i < node->children.size(); ++i) {
           Node* c = node->children[i].get();
           int cvis = c->visits.load();
           int cvl = c->virtual_loss.load();
-          double Q = (cvis==0) ? 0.0 : (c->value / (double)cvis);
-          double denom = (double)(cvis + cvl + 1);
-          double U = cfg.exploration * std::sqrt(std::log((double)node->visits.load() + 1.0) / denom);
+          double Q = (cvis==0) ? 0.0 : (c->value / static_cast<double>(cvis));
+          double denom = static_cast<double>(cvis + cvl + 1);
+          double U = cfg.exploration * std::sqrt(std::log1p(static_cast<double>(node->visits.load())) / denom);
           double p = move_prior_score(node->state, c->moveFromParent);
-          double prior_term = cfg.prior_weight * p / (1.0 + (double)cvis);
+          double prior_term = cfg.prior_weight * p / (1.0 + static_cast<double>(cvis));
           double score = Q + U + prior_term;
-          if (score > best) { best = score; bi = (int)i; }
+          if (score > best) { best = score; bi = i; }
         }
         Node* chosen = node->children[bi].get();
         // reserve virtual loss on chosen and move down
@@ -218,7 +216,7 @@ Board::Move MCTS::runParallel(const Board& root, Stone toPlay, int iterations, i
           leaf->children.push_back(std::move(child));
           // register in transposition table
           {
-            tt.insert(ptr->state.zobrist(), (void*)ptr);
+            tt.insert(ptr->state.zobrist(), static_cast<void*>(ptr));
           }
           // reserve virtual loss on new child
           ptr->virtual_loss.fetch_add(1);

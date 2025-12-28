@@ -5,3 +5,7 @@ benchmark/1.7.0
 [generators]
 CMakeDeps
 CMakeToolchain
+ 
+[tool_requires]
+ninja/1.11.1
+cppcheck/2.18.3

@@ -1,0 +1,119 @@
+src\ai\mcts.cpp:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+src\ai\mcts.cpp:31:32: style: The member function 'MCTS::legalMoves' can be static. [functionStatic]
+std::vector<Board::Move> MCTS::legalMoves(const Board& b, Stone toPlay){
+                               ^
+src\ai\mcts.h:58:28: note: The member function 'MCTS::legalMoves' can be static.
+  std::vector<Board::Move> legalMoves(const Board& b, Stone toPlay);
+                           ^
+src\ai\mcts.cpp:31:32: note: The member function 'MCTS::legalMoves' can be static.
+std::vector<Board::Move> MCTS::legalMoves(const Board& b, Stone toPlay){
+                               ^
+src\ai\mcts.cpp:120:12: style: The member function 'MCTS::backpropagate' can be static. [functionStatic]
+void MCTS::backpropagate(Node* node, double result){
+           ^
+src\ai\mcts.h:62:25: note: The member function 'MCTS::backpropagate' can be static.
+  [[maybe_unused]] void backpropagate(Node* node, double result);
+                        ^
+src\ai\mcts.cpp:120:12: note: The member function 'MCTS::backpropagate' can be static.
+void MCTS::backpropagate(Node* node, double result){
+           ^
+src\ai\pvn.cpp:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+src\ai\pvn.cpp:27:29: style: Consider using std::transform algorithm instead of a raw loop. [useStlAlgorithm]
+    else for(auto &v: out) v/=tot;
+                            ^
+src\bench\bench_mcts_simple.cpp:16:11: style: Variable 'mv' is assigned a value that is never used. [unreadVariable]
+  auto mv = m.runParallel(b, BLACK, iterations, threads);
+          ^
+src\bench\bench_mcts_simple.cpp:16:8: style: Variable 'mv' is assigned a value that is never used. [unreadVariable]
+  auto mv = m.runParallel(b, BLACK, iterations, threads);
+       ^
+src\board.cpp:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+src\rules.cpp:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+src\sgf.cpp:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+src\sgf.cpp:118:47: style: Same expression in both branches of ternary operator. [duplicateExpressionTernary]
+  ss << ";GM[1]FF[4]SZ["<< (g.moves.empty()?19:19) <<"]KM["<<g.KM<<"]"; // SZ is not tracked here
+                                              ^
+src\sgf.cpp:41:7: style: Variable 'sz' is assigned a value that is never used. [unreadVariable]
+  int sz = out.size();
+      ^
+src\sgf.cpp:68:19: style: Unused variable: nodePB [unusedVariable]
+      std::string nodePB, nodePW, nodeRE, nodeC;
+                  ^
+src\sgf.cpp:68:27: style: Unused variable: nodePW [unusedVariable]
+      std::string nodePB, nodePW, nodeRE, nodeC;
+                          ^
+src\sgf.cpp:68:35: style: Unused variable: nodeRE [unusedVariable]
+      std::string nodePB, nodePW, nodeRE, nodeC;
+                                  ^
+tests\test_board.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_mcts.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_mcts.cpp:40:11: style: Variable 'mv' is assigned a value that is never used. [unreadVariable]
+  auto mv = m.run(b, BLACK);
+          ^
+tests\test_mcts.cpp:40:8: style: Variable 'mv' is assigned a value that is never used. [unreadVariable]
+  auto mv = m.run(b, BLACK);
+       ^
+tests\test_mcts_stress.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_mcts_threaded.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_scoring.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_scoring.cpp:0:0: information: Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches. [normalCheckLevelMaxBranches]
+
+^
+tests\test_sgf.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_sgf_escape.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_sgf_extra.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_sgf_meta.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_superko.cpp:1:2: information: Include file: "gtest/gtest.h" not found. [missingInclude]
+#include "gtest/gtest.h"
+ ^
+tests\test_superko.cpp:8:18: style: Variable 'hashA' is assigned a value that is never used. [unreadVariable]
+  uint64_t hashA = b.zobrist();
+                 ^
+tests\test_superko.cpp:8:12: style: Variable 'hashA' is assigned a value that is never used. [unreadVariable]
+  uint64_t hashA = b.zobrist();
+           ^
+src\ai\mcts.h:79:8: style: The function 'setPV' is never used. [unusedFunction]
+  void setPV(std::shared_ptr<PolicyValueNet> p) { pv = std::move(p); }
+       ^
+src\board.h:20:49: style: The function 'history' is never used. [unusedFunction]
+  [[maybe_unused]] const std::vector<uint64_t>& history() const { return hashHistory; }
+                                                ^
+src\game.h:15:16: style: The function 'board' is never used. [unusedFunction]
+  const Board& board() const { return b; }
+               ^
+src\sgf.cpp:132:6: style: The function 'readFile' is never used. [unusedFunction]
+bool readFile(const std::string& path, Board& out, double& komi_out, Game* game){
+     ^
+src\sgf.cpp:139:6: style: The function 'writeFile' is never used. [unusedFunction]
+bool writeFile(const std::string& path, const Game& g){
+     ^
+nofile:0:0: information: Active checkers: 183/975 (use --checkers-report=<filename> to see details) [checkersReport]
+

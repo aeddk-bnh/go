@@ -1,7 +1,7 @@
 #include "game.h"
 #include "rules.h"
 
-Game::Game(int boardSize, Ruleset rules, double komi_): b(boardSize), toMove(BLACK), ruleset(rules), komi(komi_) {}
+Game::Game(int boardSize, Ruleset rules, double komi): b(boardSize), toMove(BLACK), ruleset(rules), komi(komi) {}
 
 Stone Game::currentPlayer() const { return toMove; }
 

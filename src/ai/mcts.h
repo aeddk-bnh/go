@@ -22,7 +22,7 @@ struct MCTSConfig {
 
 class MCTS {
 public:
-  MCTS(const MCTSConfig& cfg = MCTSConfig());
+  explicit MCTS(const MCTSConfig& cfg = MCTSConfig());
   // returns best move as (x,y), with x=-1,y=-1 meaning pass
   Board::Move run(const Board& root, Stone toPlay);
 private:
@@ -55,11 +55,12 @@ public:
   // Parallel search API
   Board::Move runParallel(const Board& root, Stone toPlay, int iterations, int nThreads);
 
-  std::vector<Board::Move> legalMoves(const Board& b, Stone toPlay);
+  static std::vector<Board::Move> legalMoves(const Board& b, Stone toPlay);
   double rollout(Board state, Stone player, std::mt19937_64 &rng);
-  Node* select(Node* node);
-  Node* expand(Node* node);
-  void backpropagate(Node* node, double result);
+  [[maybe_unused]] Node* select(Node* node);
+  [[maybe_unused]] Node* expand(Node* node);
+  [[maybe_unused]] static void backpropagate(Node* node, double result);
+
 
   // New features
 public:
@@ -71,9 +72,9 @@ public:
   // Debug helpers
   uint64_t rootHash() const { return rootNode ? rootNode->state.zobrist() : 0; }
   int rootChildrenCount() const { return rootNode ? (int)rootNode->children.size() : 0; }
-  int childVirtualLoss(size_t idx) const { return rootNode && idx<rootNode->children.size() ? rootNode->children[idx]->virtual_loss.load() : -1; }
-  int childVisits(size_t idx) const { return rootNode && idx<rootNode->children.size() ? rootNode->children[idx]->visits.load() : -1; }
+  [[maybe_unused]] int childVirtualLoss(size_t idx) const { return rootNode && idx<rootNode->children.size() ? rootNode->children[idx]->virtual_loss.load() : -1; }
+  [[maybe_unused]] int childVisits(size_t idx) const { return rootNode && idx<rootNode->children.size() ? rootNode->children[idx]->visits.load() : -1; }
   // Policy/Value network (optional). Defaults to a simple heuristic PV.
   std::shared_ptr<PolicyValueNet> pv;
-  void setPV(std::shared_ptr<PolicyValueNet> p) { pv = std::move(p); }
+  [[maybe_unused]] void setPV(std::shared_ptr<PolicyValueNet> p) { pv = std::move(p); }
 };

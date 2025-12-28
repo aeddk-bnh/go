@@ -7,11 +7,11 @@ bool MCTS::moveToChild(const Board::Move &mv){
   Board tmp = rootNode->state;
   if(mv.pass) tmp.pass(mv.s);
   else tmp.place(mv.x, mv.y, mv.s);
-  uint64_t h = tmp.zobrist();
   {
+    uint64_t h = tmp.zobrist();
     void* v = tt.get(h);
     if(v){
-      Node* found = reinterpret_cast<Node*>(v);
+      const Node* found = static_cast<Node*>(v);
       // ensure found is a direct child of rootNode
       for(size_t i=0;i<rootNode->children.size();++i){
         if(rootNode->children[i].get() == found){
@@ -27,7 +27,7 @@ bool MCTS::moveToChild(const Board::Move &mv){
 
   // Fallback: match by move fields (older behavior)
   for(size_t i=0;i<rootNode->children.size();++i){
-    auto &cptr = rootNode->children[i];
+    const auto &cptr = rootNode->children[i];
     if(cptr->moveFromParent.x==mv.x && cptr->moveFromParent.y==mv.y && cptr->moveFromParent.pass==mv.pass && cptr->moveFromParent.s==mv.s){
       auto newRoot = std::move(rootNode->children[i]);
       rootNode->children.erase(rootNode->children.begin()+i);
@@ -52,7 +52,7 @@ bool MCTS::moveToChild(const Board::Move &mv){
       rootNode->untriedMoves.erase(rootNode->untriedMoves.begin()+i);
       rootNode = std::move(child);
       // register new root in transposition table
-      tt.insert(rootNode->state.zobrist(), (void*)rootNode.get());
+      tt.insert(rootNode->state.zobrist(), static_cast<void*>(rootNode.get()));
       return true;
     }
   }
@@ -79,12 +79,12 @@ int MCTS::chooseChildIndexAtRoot() const{
     auto c = rootNode->children[i].get();
     int cvis = c->visits.load();
     int cvl = c->virtual_loss.load();
-    double Q = (cvis==0)?0.0:(c->value / (double)cvis);
+    double Q = (cvis==0)?0.0:(c->value / static_cast<double>(cvis));
     // Amplify virtual-loss effect so it meaningfully penalizes selection at root
-    double denom = (double)(cvis + 1 + cvl * 10);
-    double U = cfg.exploration * std::sqrt(std::log((double)rootNode->visits.load()+1.0) / denom);
+    double denom = static_cast<double>(cvis + 1 + cvl * 10);
+    double U = cfg.exploration * std::sqrt(std::log1p(static_cast<double>(rootNode->visits.load())) / denom);
     // penalize by virtual loss to bias selection away from nodes under simulation
-    double score = Q + U - (double)cvl * 1.0;
+    double score = Q + U - static_cast<double>(cvl) * 1.0;
     (void)0;
     if(score > best){ best = score; bi = (int)i; }
   }

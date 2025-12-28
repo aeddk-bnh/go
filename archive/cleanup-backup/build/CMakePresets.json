@@ -1,0 +1,46 @@
+{
+    "version": 3,
+    "vendor": {
+        "conan": {}
+    },
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 15,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "conan-release",
+            "displayName": "'conan-release' config",
+            "description": "'conan-release' configure using 'MinGW Makefiles' generator",
+            "generator": "MinGW Makefiles",
+            "cacheVariables": {
+                "CMAKE_SH": "CMAKE_SH-NOTFOUND",
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "environment": {
+                "CPPCHECK_HTMLREPORT": "C:\\Users\\ASUS\\.conan2\\p\\b\\cppch133994d1fef22\\p\\bin\\cppcheck-htmlreport",
+                "PATH": "C:\\Users\\ASUS\\.conan2\\p\\b\\cppch133994d1fef22\\p\\bin;C:\\Users\\ASUS\\.conan2\\p\\ninja367aac28c0c37\\p\\bin;$penv{PATH}"
+            },
+            "toolchainFile": "conan_toolchain.cmake",
+            "binaryDir": "C:\\Users\\ASUS\\Documents\\go\\build"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "conan-release",
+            "configurePreset": "conan-release",
+            "jobs": 16
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "conan-release",
+            "configurePreset": "conan-release",
+            "execution": {
+                "jobs": 16
+            }
+        }
+    ]
+}
