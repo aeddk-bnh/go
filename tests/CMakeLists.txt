@@ -27,3 +27,7 @@ add_test(NAME SGFTest COMMAND test_sgf)
 add_executable(test_sgf_extra test_sgf_extra.cpp)
 target_link_libraries(test_sgf_extra gtest_main gogame)
 add_test(NAME SGFExtraTest COMMAND test_sgf_extra)
+
+add_executable(test_sgf_meta test_sgf_meta.cpp)
+target_link_libraries(test_sgf_meta gtest_main gogame)
+add_test(NAME SGFMetaTest COMMAND test_sgf_meta)

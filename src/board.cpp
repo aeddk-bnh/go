@@ -131,3 +131,12 @@ bool Board::pass(Stone s){
   recordPass(s);
   return true;
 }
+
+// public helper implementations
+void Board::appendMove(int x,int y, Stone s, bool pass, const std::string &comment){
+  moveHistory.push_back({x,y,s,pass,comment});
+}
+
+void Board::setLastMoveComment(const std::string &c){
+  if(!moveHistory.empty()) moveHistory.back().comment = c;
+}

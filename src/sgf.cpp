@@ -1,14 +1,23 @@
 #include "sgf.h"
 #include <cctype>
 #include <sstream>
+#include <fstream>
+#include <algorithm>
 
 static int letterToCoord(char c){ return c - 'a'; }
 static char coordToLetter(int v){ return char('a' + v); }
 
+static std::string escapeText(const std::string &in){
+  std::string out;
+  for(char c:in){ if(c==']' || c=='\\') { out.push_back('\\'); out.push_back(c); } else out.push_back(c); }
+  return out;
+}
+
 namespace SGF {
 
-bool parse(const std::string& sgf, Board& out, double& komi_out){
+bool parse(const std::string& sgf, Board& out, double& komi_out, Game* game){
   komi_out = 0.0;
+  if(game){ game->moves.clear(); game->PB.clear(); game->PW.clear(); game->RE.clear(); game->KM = 0.0; }
   int sz = out.size();
   // find SZ
   auto szpos = sgf.find("SZ[");
@@ -17,7 +26,6 @@ bool parse(const std::string& sgf, Board& out, double& komi_out){
     if(p!=std::string::npos){
       std::string val = sgf.substr(szpos+3, p-(szpos+3));
       int v = std::stoi(val);
-      // If size conflicts, ignore (we keep board size as is)
       (void)v;
     }
   }
@@ -28,34 +36,48 @@ bool parse(const std::string& sgf, Board& out, double& komi_out){
     if(p!=std::string::npos){
       std::string val = sgf.substr(kmpos+3, p-(kmpos+3));
       komi_out = std::stod(val);
+      if(game) game->KM = komi_out;
     }
   }
 
-  // parse nodes and moves
+  // parse nodes and moves (main line only)
   size_t i=0; while(i<sgf.size()){
     if(sgf[i]==';'){
       i++;
-      // read properties until next ';' or ')'
-      while(i<sgf.size() && sgf[i]!=';' && sgf[i]!=')'){
-        // skip whitespace
+      // parse all properties in this node
+      std::string nodePB, nodePW, nodeRE, nodeC;
+      char moveColor=0; std::string moveVal;
+      while(i<sgf.size() && sgf[i]!=';' && sgf[i]!=')' && sgf[i] != '('){
         if(std::isspace((unsigned char)sgf[i])){ i++; continue; }
         // property name
         size_t j=i; while(j<sgf.size() && std::isupper((unsigned char)sgf[j])) j++;
         std::string prop = sgf.substr(i, j-i);
         i = j;
-        // expect bracket
         if(i<sgf.size() && sgf[i]=='['){
-          i++;
-          size_t k=i; while(k<sgf.size() && sgf[k]!=']') k++;
+          i++; size_t k=i; while(k<sgf.size() && sgf[k]!=']') k++;
           std::string val = sgf.substr(i, k-i);
-          i = k+1;
+          i = (k<sgf.size()?k+1:k);
           if(prop=="B" || prop=="W"){
-            Stone s = (prop=="B"?BLACK:WHITE);
-            if(val.size()==0){ out.pass(s); }
-            else if(val.size()>=2){ int x=letterToCoord(val[0]); int y=letterToCoord(val[1]); out.place(x,y,s); }
+            moveColor = prop[0]; moveVal = val;
+          } else if(prop=="KM"){
+            komi_out = std::stod(val);
+            if(game) game->KM = komi_out;
+          } else if(prop=="PB"){
+            if(game) game->PB = val;
+          } else if(prop=="PW"){
+            if(game) game->PW = val;
+          } else if(prop=="RE"){
+            if(game) game->RE = val;
+          } else if(prop=="C"){
+            nodeC = val;
           }
-          // ignore other properties for now
         }
+      }
+      // apply move if any
+      if(moveColor!=0){
+        Stone s = (moveColor=='B')?BLACK:WHITE;
+        if(moveVal.size()==0){ out.pass(s); out.setLastMoveComment(nodeC); if(game) game->moves.push_back({-1,-1,s,true,nodeC}); }
+        else if(moveVal.size()>=2){ int x=letterToCoord(moveVal[0]); int y=letterToCoord(moveVal[1]); out.place(x,y,s); out.setLastMoveComment(nodeC); if(game) game->moves.push_back({x,y,s,false,nodeC}); }
       }
     } else i++;
   }
@@ -63,15 +85,41 @@ bool parse(const std::string& sgf, Board& out, double& komi_out){
 }
 
 std::string write(const Board& b, double komi){
+  Game g;
+  g.KM = komi;
+  g.moves = b.moves();
+  return write(g);
+}
+
+std::string write(const Game& g){
   std::ostringstream ss;
   ss << "(\n";
-  ss << ";GM[1]FF[4]SZ["<<b.size()<<"]KM["<<komi<<"]";
-  for(auto &m : b.moves()){
-    if(m.pass){ ss << ";" << (m.s==BLACK?"B":"W") << "[]"; }
-    else { ss << ";" << (m.s==BLACK?"B":"W") << "[" << coordToLetter(m.x) << coordToLetter(m.y) << "]"; }
+  ss << ";GM[1]FF[4]SZ["<< (g.moves.empty()?19:19) <<"]KM["<<g.KM<<"]"; // SZ is not tracked here
+  if(!g.PB.empty()) ss << "PB["<<escapeText(g.PB)<<"]";
+  if(!g.PW.empty()) ss << "PW["<<escapeText(g.PW)<<"]";
+  if(!g.RE.empty()) ss << "RE["<<escapeText(g.RE)<<"]";
+  for(auto &m : g.moves){
+    ss << ";" << (m.s==BLACK?"B":"W");
+    if(m.pass) ss << "[]";
+    else ss << "[" << coordToLetter(m.x) << coordToLetter(m.y) << "]";
+    if(!m.comment.empty()) ss << "C["<< escapeText(m.comment) << "]";
   }
   ss << ")\n";
   return ss.str();
+}
+
+bool readFile(const std::string& path, Board& out, double& komi_out, Game* game){
+  std::ifstream in(path);
+  if(!in) return false;
+  std::ostringstream ss; ss << in.rdbuf();
+  return parse(ss.str(), out, komi_out, game);
+}
+
+bool writeFile(const std::string& path, const Game& g){
+  std::ofstream out(path);
+  if(!out) return false;
+  out << write(g);
+  return true;
 }
 
 } // namespace SGF

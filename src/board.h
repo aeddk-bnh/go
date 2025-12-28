@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <string>
 
 #include "types.h"
 #include "zobrist.h"
@@ -18,9 +19,13 @@ public:
   uint64_t zobrist() const { return currentHash; }
   const std::vector<uint64_t>& history() const { return hashHistory; }
 
-  struct Move { int x; int y; Stone s; bool pass; };
+  struct Move { int x; int y; Stone s; bool pass; std::string comment; };
   const std::vector<Move>& moves() const { return moveHistory; }
   bool pass(Stone s);
+
+  // helpers for SGF/metadata
+  void appendMove(int x,int y, Stone s, bool pass=false, const std::string &comment = "");
+  void setLastMoveComment(const std::string &c);
 
 private:
   int N;
@@ -33,6 +38,6 @@ private:
   Zobrist zobristTable{9};
   // Move history for SGF roundtrips
   std::vector<Move> moveHistory;
-  void recordMove(int x,int y, Stone s, bool pass=false){ moveHistory.push_back({x,y,s,pass}); }
-  void recordPass(Stone s){ moveHistory.push_back({-1,-1,s,true}); hashHistory.push_back(currentHash); }
+  void recordMove(int x,int y, Stone s, bool pass=false){ moveHistory.push_back({x,y,s,pass, std::string()}); }
+  void recordPass(Stone s){ moveHistory.push_back({-1,-1,s,true, std::string()}); hashHistory.push_back(currentHash); }
 };
