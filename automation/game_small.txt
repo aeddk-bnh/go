@@ -1,6 +1,0 @@
-
-ai mcts 0.5 2 1.2
-ai mcts 0.5 2 1.2
-ai mcts 0.5 2 1.2
-ai mcts 0.5 2 1.2
-quit

@@ -45,3 +45,10 @@ Thumbs.db
 # Generated build folders
 /build-bench/
 /build-bench-release/
+
+# Automation artifacts (self-play results, logs, temporary scripts)
+/automation/
+*.csv
+*.ps1
+sim_results*.csv
+batch_*.txt

@@ -456,6 +456,14 @@ static std::pair<int,int> mctsParallelTimed(const Board &rootBoard, int rootCapB
     std::mt19937_64 rng((unsigned)std::chrono::high_resolution_clock::now().time_since_epoch().count());
     return mctsMoveTimed(rootBoard, rootCapB, rootCapW, toMove, seconds, Cp, rng, rootPtr);
   }
+  // ensure root exists before starting worker threads (parallel path expects non-null rootPtr)
+  if(!rootPtr){
+    Stone rootPJM = (toMove==BLACK?WHITE:BLACK);
+    std::vector<std::pair<int,int>> rootMoves;
+    for(int y=0;y<N;y++) for(int x=0;x<N;x++) if(rootBoard.isLegal(x,y,toMove)) rootMoves.emplace_back(x,y);
+    rootMoves.emplace_back(-1,-1);
+    rootPtr = std::make_unique<MCTSNode>(nullptr, rootMoves, std::pair<int,int>{-2,-2}, rootPJM);
+  }
   std::vector<std::thread> workers;
   std::mutex seedMutex;
   std::mt19937_64 seedRng((unsigned)std::chrono::high_resolution_clock::now().time_since_epoch().count());
@@ -592,6 +600,75 @@ int main(){
   cout << "Go console (game-focus)" << endl;
   cout << "Board size (Enter for 9): ";
   std::string line;
+  // Batch mode: if GO_BATCH_COUNT is set, run automated self-play games and exit
+  const char *batchCountEnv = std::getenv("GO_BATCH_COUNT");
+  int batchCount = 0;
+  if(batchCountEnv){ try{ batchCount = std::stoi(batchCountEnv); }catch(...){} }
+  if(batchCount > 0){ const char *bsize = std::getenv("GO_BATCH_BOARD"); if(bsize){ try{ N = std::stoi(bsize); }catch(...){} } }
+  // If batch mode requested, run batchCount self-play games (both sides MCTS) and exit
+  if(batchCount > 0){
+    const char *secsEnv = std::getenv("GO_BATCH_SECS"); double batchSecs = 0.5; if(secsEnv) try{ batchSecs = std::stod(secsEnv); }catch(...){}
+    const char *thrEnv = std::getenv("GO_BATCH_THREADS"); int batchThreads = 2; if(thrEnv) try{ batchThreads = std::stoi(thrEnv); }catch(...){}
+    const char *cpEnv = std::getenv("GO_BATCH_CP"); double batchCp = 1.414; if(cpEnv) try{ batchCp = std::stod(cpEnv); }catch(...){}
+    const char *outEnv = std::getenv("GO_BATCH_OUT"); std::string outPath = outEnv ? outEnv : std::string("D:/go/automation/sim_results.csv");
+    // write header only if the file is empty or doesn't exist
+    bool needHeader = true;
+    {
+      std::ifstream fin(outPath, std::ios::binary | std::ios::ate);
+      if(fin.is_open()){
+        std::streampos sz = fin.tellg();
+        needHeader = (sz == 0);
+      } else {
+        needHeader = true; // file doesn't exist, header needed
+      }
+    }
+    std::ofstream fout(outPath, std::ios::app);
+    if(!fout.is_open()){ std::cerr<<"Failed to open output file: "<<outPath<<"\n"; return 1; }
+    if(needHeader) { fout << "game_id,winner,black_total,white_total,moves,duration_s\n"; }
+    for(int g=1; g<=batchCount; ++g){
+      std::cerr << "[BATCH] Starting game " << g << "\n";
+      Board b(N); Stone t = BLACK; int capb=0, capw=0;
+      std::unique_ptr<MCTSNode> root;
+      int consecutivePasses = 0;
+      int moves = 0;
+      auto t0 = std::chrono::high_resolution_clock::now();
+      while(consecutivePasses < 2 && moves < N*N*3){
+        auto mv = mctsParallelTimed(b, capb, capw, t, batchSecs, batchThreads, batchCp, root);
+        if(mv.first == -1){ std::cerr << "[BATCH] move: pass\n"; b.pass(t); consecutivePasses++; }
+        else { std::cerr << "[BATCH] move: "<<mv.first<<","<<mv.second<<"\n"; if(b.place(mv.first,mv.second,t)){ consecutivePasses = 0; } else { consecutivePasses++; } }
+        if(root){ auto newRoot = detachChildByMove(root, mv); if(newRoot) root = std::move(newRoot); else root.reset(); }
+        t = (t==BLACK?WHITE:BLACK);
+        ++moves;
+      }
+      std::cerr << "[BATCH] Finished simulation loop for game "<<g<<" moves="<<moves<<"\n";
+      auto t1 = std::chrono::high_resolution_clock::now();
+      double dur = std::chrono::duration<double>(t1-t0).count();
+      int blackTerr=0, whiteTerr=0;
+      int NN = b.size();
+      std::vector<char> seen(NN*NN,0);
+      const int dx[4]={1,-1,0,0}, dy[4]={0,0,1,-1};
+      for(int yy=0;yy<NN;yy++) for(int xx=0;xx<NN;xx++){
+        int id = yy*NN + xx; if(seen[id]) continue;
+        if(b.get(xx,yy) != EMPTY){ seen[id]=1; continue; }
+        std::vector<int> stack; stack.push_back(id); seen[id]=1; bool adjB=false, adjW=false; int rc=0;
+        while(!stack.empty()){ int cur = stack.back(); stack.pop_back(); rc++; int cx = cur % NN, cy = cur / NN;
+          for(int k=0;k<4;k++){ int nx=cx+dx[k], ny=cy+dy[k]; if(nx<0||ny<0||nx>=NN||ny>=NN) continue; int nid = ny*NN + nx; Stone s = b.get(nx,ny); if(s==EMPTY && !seen[nid]){ seen[nid]=1; stack.push_back(nid); } else if(s==BLACK) adjB=true; else if(s==WHITE) adjW=true; }
+        }
+        if(adjB && !adjW) blackTerr += rc; else if(adjW && !adjB) whiteTerr += rc;
+      }
+      int blackStones=0, whiteStones=0;
+      for(int yy=0;yy<NN;yy++) for(int xx=0;xx<NN;xx++){ Stone s = b.get(xx,yy); if(s==BLACK) ++blackStones; else if(s==WHITE) ++whiteStones; }
+      int blackTotal = blackStones + capb + blackTerr;
+      int whiteTotal = whiteStones + capw + whiteTerr;
+      std::string winner = (blackTotal>whiteTotal?"Black":(whiteTotal>blackTotal?"White":"Tie"));
+      fout << g << "," << winner << "," << blackTotal << "," << whiteTotal << "," << moves << "," << dur << "\n";
+      fout.flush();
+      std::cout<<"Finished game "<<g<<" winner="<<winner<<" moves="<<moves<<" dur="<<dur<<"s\n";
+    }
+    fout.close();
+    std::cout<<"Batch complete. Results written to "<<outPath<<"\n";
+    return 0;
+  }
   // If GO_AUTORUN env var is set, read lines into `autorunLines` so the program can be driven by a script.
   const char *autorun = std::getenv("GO_AUTORUN");
   std::vector<std::string> autorunLines;
@@ -684,63 +761,7 @@ int main(){
       cout<<"play-with-AI enabled: aiPlays="<<(aiPlays==BLACK?"B":(aiPlays==WHITE?"W":"both"))<<" secs="<<aiSeconds<<" threads="<<aiThreads<<" Cp="<<aiCp<<"\n";
       continue;
     }
-    if(line.rfind("stopai",0)==0 || line.rfind("playai off",0)==0){ playWithAI = false; bgThinker.stop(); cout<<"play-with-AI disabled\n"; continue; }
-    if(line.rfind("mcts",0)==0){ size_t iters=500; double Cp=1.414; std::istringstream iss(line); std::string cmd; iss>>cmd; iss>>iters; iss>>Cp; auto mv = mctsMove(board, capB, capW, turn, iters, Cp, rng, mctsRoot);
-      if(mv.first==-1){ board.pass(turn); turn = (turn==BLACK?WHITE:BLACK); pushHistory(board); }
-      else { if(board.place(mv.first,mv.second,turn)) { /*captures tracked by board if needed*/ } turn = (turn==BLACK?WHITE:BLACK); pushHistory(board); }
-      // attempt to reuse subtree: the chosen move should correspond to a child of current root
-      if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, mv); if(newRoot) { mctsRoot = std::move(newRoot); } else { mctsRoot.reset(); } }
-      // notify background thinker of the new root and turn
-      bgThinker.setRoot(board, capB, capW, turn, &mctsRoot);
-      continue; }
-    if(line.rfind("mctst",0)==0){ double secs=2.0; double Cp=1.414; std::istringstream iss(line); std::string cmd; iss>>cmd; iss>>secs; iss>>Cp; if(secs<=0) secs = 2.0; auto mv = mctsMoveTimed(board, capB, capW, turn, secs, Cp, rng, mctsRoot);
-      if(mv.first==-1){ board.pass(turn); turn = (turn==BLACK?WHITE:BLACK); pushHistory(board); }
-      else { if(board.place(mv.first,mv.second,turn)){} turn = (turn==BLACK?WHITE:BLACK); pushHistory(board); }
-      if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, mv); if(newRoot) { mctsRoot = std::move(newRoot); } else { mctsRoot.reset(); } }
-      bgThinker.setRoot(board, capB, capW, turn, &mctsRoot);
-      continue; }
-    if(line.rfind("ai",0)==0){
-      // ai mcts [secs] [threads] [Cp]  -> run MCTS; otherwise random move
-      std::istringstream iss(line); std::string cmd, mode; iss>>cmd>>mode;
-      if(mode=="mcts"){
-        double secs = 2.0; int threads = 4; double Cp = 1.414;
-        if(iss>>secs){} if(iss>>threads){} if(iss>>Cp){}
-        auto mv = mctsParallelTimed(board, capB, capW, turn, secs, threads, Cp, mctsRoot);
-        if(mv.first==-1){ board.pass(turn); pushHistory(board); if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, {-1,-1}); if(newRoot) mctsRoot = std::move(newRoot); else mctsRoot.reset(); } bgThinker.setRoot(board, capB, capW, (turn==BLACK?WHITE:BLACK), &mctsRoot); turn = (turn==BLACK?WHITE:BLACK); continue; }
-        if(board.place(mv.first,mv.second,turn)){ pushHistory(board); }
-        if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, mv); if(newRoot) mctsRoot = std::move(newRoot); else mctsRoot.reset(); }
-        bgThinker.setRoot(board, capB, capW, (turn==BLACK?WHITE:BLACK), &mctsRoot);
-        turn = (turn==BLACK?WHITE:BLACK);
-        continue;
-      }
-      // fallback: simple random move
-      std::vector<std::pair<int,int>> moves;
-      for(int y=0;y<N;y++) for(int x=0;x<N;x++) if(board.isLegal(x,y,turn)) moves.emplace_back(x,y);
-      if(moves.empty()){ board.pass(turn); pushHistory(board); if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, {-1,-1}); if(newRoot) mctsRoot = std::move(newRoot); else mctsRoot.reset(); } bgThinker.setRoot(board, capB, capW, (turn==BLACK?WHITE:BLACK), &mctsRoot); turn = (turn==BLACK?WHITE:BLACK); continue; }
-      std::uniform_int_distribution<size_t> dist(0, moves.size()-1);
-      auto p = moves[dist(rng)]; board.place(p.first,p.second,turn);
-      // update history and try subtree reuse
-      pushHistory(board);
-      if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, p); if(newRoot) mctsRoot = std::move(newRoot); else mctsRoot.reset(); }
-      bgThinker.setRoot(board, capB, capW, (turn==BLACK?WHITE:BLACK), &mctsRoot);
-      turn = (turn==BLACK?WHITE:BLACK);
-      continue;
-    }
-    if(line=="undo"||line=="u"){ if(history.size()<=1){ cout<<"Nothing to undo"<<endl; continue; } history.pop_back(); histCapB.pop_back(); histCapW.pop_back(); histTurns.pop_back(); board = history.back(); capB = histCapB.back(); capW = histCapW.back(); turn = histTurns.back(); bgThinker.setRoot(board, capB, capW, turn, &mctsRoot); continue; }
-    if(line=="pass"||line=="p"){ board.pass(turn); pushHistory(board); // update subtree for pass move
-      if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, {-1,-1}); if(newRoot) mctsRoot = std::move(newRoot); else mctsRoot.reset(); }
-      bgThinker.setRoot(board, capB, capW, (turn==BLACK?WHITE:BLACK), &mctsRoot);
-      turn = (turn==BLACK?WHITE:BLACK); continue; }
-    if(line=="score"){ int bTerr=0,wTerr=0; /* compute territory simple */ cout<<"Scoring not implemented here."<<endl; std::getline(cin,line); continue; }
-
-    int x=0,y=0;
-    if(!parseCoord(line,x,y)){ cout<<"Invalid input"<<endl; continue; }
-    if(!board.isLegal(x,y,turn)){ cout<<"Illegal move"<<endl; continue; }
-    board.place(x,y,turn);
-    // update subtree reuse for human move
-    if(mctsRoot){ auto newRoot = detachChildByMove(mctsRoot, {x,y}); if(newRoot) mctsRoot = std::move(newRoot); else mctsRoot.reset(); }
-    bgThinker.setRoot(board, capB, capW, (turn==BLACK?WHITE:BLACK), &mctsRoot);
-    turn = (turn==BLACK?WHITE:BLACK);
+    
   }
   cout<<"Bye"<<endl;
   // If autorun was used, write a simple final summary to a file for automated tests
